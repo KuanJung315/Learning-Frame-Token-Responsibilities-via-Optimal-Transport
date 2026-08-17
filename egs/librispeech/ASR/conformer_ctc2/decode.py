@@ -246,6 +246,14 @@ def get_parser():
         last output linear layer
         """,
     )
+    parser.add_argument(
+        "--test-sets",
+        type=str,
+        default="test",
+        choices=["test", "dev", "all"],
+        help="Which sets to decode: 'test' for test-clean/test-other, "
+        "'dev' for dev-clean/dev-other, 'all' for all four sets.",
+    )
 
     return parser
 
@@ -959,14 +967,21 @@ def main():
     args.return_cuts = True
     librispeech = LibriSpeechAsrDataModule(args)
 
-    test_clean_cuts = librispeech.test_clean_cuts()
-    test_other_cuts = librispeech.test_other_cuts()
-
-    test_clean_dl = librispeech.test_dataloaders(test_clean_cuts)
-    test_other_dl = librispeech.test_dataloaders(test_other_cuts)
-
-    test_sets = ["test-clean", "test-other"]
-    test_dl = [test_clean_dl, test_other_dl]
+    split = params.test_sets
+    test_sets = []
+    test_dl = []
+    if split in ("test", "all"):
+        test_sets += ["test-clean", "test-other"]
+        test_dl += [
+            librispeech.test_dataloaders(librispeech.test_clean_cuts()),
+            librispeech.test_dataloaders(librispeech.test_other_cuts()),
+        ]
+    if split in ("dev", "all"):
+        test_sets += ["dev-clean", "dev-other"]
+        test_dl += [
+            librispeech.test_dataloaders(librispeech.dev_clean_cuts()),
+            librispeech.test_dataloaders(librispeech.dev_other_cuts()),
+        ]
 
     for test_set, test_dl in zip(test_sets, test_dl):
         results_dict = decode_dataset(

@@ -452,7 +452,7 @@ def get_decoder_model(params: AttributeDict) -> nn.Module:
 
 def get_ctc_model(params: AttributeDict) -> nn.Module:
     encoder = get_encoder_model(params)
-    decoder = get_decoder_model(params)
+    decoder = get_decoder_model(params) if params.num_decoder_layers > 0 else None
 
     model = CTCModel(
         encoder=encoder,
@@ -635,7 +635,10 @@ def compute_loss(
     if params.att_rate != 0.0:
         info["att_loss"] = att_loss.detach().cpu().item()
 
-    loss = (1.0 - params.att_rate) * ctc_loss + params.att_rate * att_loss
+    if params.att_rate != 0.0:
+        loss = (1.0 - params.att_rate) * ctc_loss + params.att_rate * att_loss
+    else:
+        loss = ctc_loss
     assert loss.requires_grad == is_training, f"{loss.requires_grad} != {is_training}"
     info["loss"] = loss.detach().cpu().item()
 

@@ -1,0 +1,161 @@
+% Updated paper tables generated from completed experiments on 2026-06-11.
+% Requires: \usepackage{booktabs}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Three-seed HLG 1-best WER on LibriSpeech 100h. The fixed
+  decoding bias for each method is selected on the development sets.}
+  \label{tab:libri100_hlg_main}
+  \begin{tabular}{lccc}
+    \toprule
+    Method & Fixed bias & Test-clean & Test-other \\
+    \midrule
+    Baseline CTC
+      & 1.5
+      & $5.530 \pm 0.035$
+      & $14.907 \pm 0.172$ \\
+    AdaMER
+      & 2.0
+      & $\mathbf{5.440 \pm 0.100}$
+      & $14.790 \pm 0.017$ \\
+    VFTA
+      & 2.4
+      & $5.497 \pm 0.035$
+      & $\mathbf{14.747 \pm 0.058}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Calibration-free CTC greedy-search WER on LibriSpeech 100h.
+  All methods use epoch 40 / avg 10, zero decoding bias, and the same
+  three seeds. No HLG or external language model is used.}
+  \label{tab:libri100_greedy_ablation}
+  \begin{tabular}{lcc}
+    \toprule
+    Method & Test-clean & Test-other \\
+    \midrule
+    Baseline
+      & $7.487 \pm 0.199$
+      & $20.003 \pm 0.393$ \\
+    AdaMER
+      & $\mathbf{7.197 \pm 0.102}$
+      & $\mathbf{19.203 \pm 0.123}$ \\
+    VFTA
+      & $7.397 \pm 0.015$
+      & $19.763 \pm 0.055$ \\
+    VFTA w/o OT
+      & $7.377 \pm 0.021$
+      & $20.003 \pm 0.049$ \\
+    VFTA w/o prior-KL
+      & $7.443 \pm 0.035$
+      & $20.007 \pm 0.158$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Posterior geometry on 2000 AISHELL-1 development cuts.
+  Both models use seed 42. AdaMER produces a broader posterior while
+  also obtaining lower CER than the current VFTA setting.}
+  \label{tab:aishell_adamer_vfta_geometry}
+  \begin{tabular}{lcc}
+    \toprule
+    Metric & AdaMER & VFTA floor-0.18 + OT \\
+    \midrule
+    Argmax nonblank ratio
+      & $\mathbf{0.31118}$ & $0.17237$ \\
+    Mean nonblank probability
+      & $\mathbf{0.25647}$ & $0.17273$ \\
+    Keep ratio
+      & $\mathbf{0.36850}$ & $0.18488$ \\
+    Posterior entropy
+      & $\mathbf{0.17049}$ & $0.03736$ \\
+    Posterior peakiness
+      & $0.89928$ & $\mathbf{0.98795}$ \\
+    Spike width
+      & $\mathbf{2.43502}$ & $1.35180$ \\
+    CTC support
+      & $\mathbf{2.84053}$ & $1.44804$ \\
+    CTC barycenter jitter
+      & $0.05419$ & $\mathbf{0.02994}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{AISHELL-1 nominal floor sweep using seed 42, epoch 40 /
+  avg 10, OT-10, and $\lambda_{\mathrm{mean}}=0.005$. Recognition is
+  stable, but the achieved prior mean does not follow the target.}
+  \label{tab:aishell_floor_diagnostic}
+  \begin{tabular}{ccccc}
+    \toprule
+    Floor target & Dev CER & Test CER & Achieved prior mean & Mean loss \\
+    \midrule
+    0.18 & 4.94 & 5.36 & 0.1414 & 0.0386 \\
+    0.22 & 4.94 & 5.40 & 0.1432 & 0.0768 \\
+    0.26 & 4.97 & 5.46 & 0.1400 & 0.1200 \\
+    0.30 & \textbf{4.92} & \textbf{5.34} & 0.1389 & 0.1611 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Updated three-seed AISHELL-1 recognition results. Protocols
+  differ in checkpoint selection and are reported explicitly.}
+  \label{tab:aishell_updated_recognition}
+  \begin{tabular}{llcc}
+    \toprule
+    Method & Protocol & Dev CER & Test CER \\
+    \midrule
+    Baseline CTC
+      & e100 / avg20
+      & $5.777 \pm 0.015$
+      & $6.280 \pm 0.079$ \\
+    VI, no-alpha batched
+      & e60 / avg10
+      & $4.817 \pm 0.055$
+      & $5.257 \pm 0.086$ \\
+    VFTA, floor-0.18 + OT
+      & e60 / avg20
+      & $4.807 \pm 0.050$
+      & $5.243 \pm 0.067$ \\
+    AdaMER
+      & e100 / avg20
+      & $\mathbf{4.377 \pm 0.012}$
+      & $\mathbf{4.790 \pm 0.070}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Matched AISHELL-1 component ablation using epoch 40 / avg 10
+  CTC greedy search over seeds 40, 41, and 42.}
+  \label{tab:aishell_matched_ablation}
+  \begin{tabular}{lcc}
+    \toprule
+    Method & Dev CER & Test CER \\
+    \midrule
+    Floor-0.18 + prior-KL + OT
+      & $\mathbf{5.013 \pm 0.070}$
+      & $\mathbf{5.453 \pm 0.095}$ \\
+    Floor-0.18 + prior-KL, w/o OT
+      & $5.160 \pm 0.036$
+      & $5.700 \pm 0.056$ \\
+    Floor-0.18 + OT, w/o prior-KL
+      & $5.020 \pm 0.061$
+      & $5.493 \pm 0.121$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}

@@ -1,0 +1,134 @@
+% Superseded by PAPER_TABLES_UPDATE_2026-06-11.tex after new AISHELL AdaMER
+% and matched ablation results completed.
+% Paper-ready table snippets generated from completed experiments on 2026-06-08.
+% Requires: \usepackage{booktabs}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Recognition results on AISHELL-1 and LibriSpeech 100h.
+  Results are mean $\pm$ sample standard deviation over three seeds.
+  Decoding settings are selected on the development sets and fixed across seeds.}
+  \label{tab:main_recognition}
+  \begin{tabular}{llcc}
+    \toprule
+    Dataset & Method & Dev / Test-clean & Test / Test-other \\
+    \midrule
+    AISHELL-1
+      & Baseline CTC
+      & $5.777 \pm 0.015$
+      & $6.280 \pm 0.079$ \\
+    AISHELL-1
+      & VI, no-alpha batched
+      & $4.817 \pm 0.055$
+      & $5.257 \pm 0.086$ \\
+    AISHELL-1
+      & VI, floor-0.18 + OT-10
+      & $\mathbf{4.807 \pm 0.050}$
+      & $\mathbf{5.243 \pm 0.067}$ \\
+    \midrule
+    LibriSpeech 100h
+      & Baseline CTC
+      & $5.530 \pm 0.035$
+      & $14.907 \pm 0.172$ \\
+    LibriSpeech 100h
+      & AdaMER
+      & $\mathbf{5.440 \pm 0.100}$
+      & $14.790 \pm 0.017$ \\
+    LibriSpeech 100h
+      & VFTA
+      & $5.497 \pm 0.035$
+      & $\mathbf{14.747 \pm 0.058}$ \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Posterior geometry on 2000 AISHELL-1 development cuts using
+  seed 42. No-alpha and floor-0.18 achieve nearly identical recognition
+  accuracy, while floor-0.18 produces substantially broader posteriors.
+  Bold values mark relevant geometric extrema, not necessarily better
+  alignment quality.}
+  \label{tab:aishell_geometry}
+  \begin{tabular}{lccc}
+    \toprule
+    Metric & Baseline & No-alpha & Floor-0.18 + OT-10 \\
+    \midrule
+    Argmax nonblank ratio
+      & 0.1286 & 0.1286 & \textbf{0.1724} \\
+    Mean nonblank probability
+      & 0.1286 & 0.1288 & \textbf{0.1727} \\
+    Keep ratio
+      & 0.1288 & 0.1297 & \textbf{0.1849} \\
+    Posterior entropy
+      & 0.0105 & 0.0205 & \textbf{0.0374} \\
+    Posterior peakiness
+      & \textbf{0.9964} & 0.9950 & 0.9880 \\
+    Spike width
+      & 1.0073 & 1.0077 & \textbf{1.3518} \\
+    CTC support
+      & 1.0083 & 1.0147 & \textbf{1.4480} \\
+    Barycenter jitter
+      & 0.0037 & \textbf{0.0034} & 0.0299 \\
+    Off-diagonal mass
+      & \textbf{0.0004} & 0.0009 & 0.0882 \\
+    Diagonal MAD
+      & \textbf{0.0032} & 0.0045 & 0.0467 \\
+    Backward rate
+      & 0.0011 & 0.0005 & \textbf{0.0004} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Ground-truth boundary evaluation on the full TIMIT test set
+  (240 utterances). Broader or regularized posteriors do not necessarily
+  yield more accurate boundaries.}
+  \label{tab:timit_boundaries}
+  \begin{tabular}{lcc}
+    \toprule
+    Model / alignment & F1@20ms $\uparrow$ & MAE (ms) $\downarrow$ \\
+    \midrule
+    Baseline, greedy       & 0.5945 & \textbf{17.97} \\
+    Baseline, forced       & 0.6095 & 21.32 \\
+    Original VI, greedy    & 0.5731 & 19.50 \\
+    Original VI, forced    & 0.5845 & 27.72 \\
+    Original VI, raw OT    & 0.4760 & 63.11 \\
+    Best W1, greedy        & 0.6000 & 17.98 \\
+    Best W1, forced        & \textbf{0.6176} & 21.81 \\
+    Best OT plan, OT-2/W1-5 & 0.5042 & 53.07 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Provisional single-seed recognition results on TIMIT and
+  LibriSpeech 960h. These results are reported as supporting evidence
+  rather than primary multi-seed comparisons.}
+  \label{tab:single_seed_scale}
+  \begin{tabular}{llcc}
+    \toprule
+    Dataset & Method & Dev & Test \\
+    \midrule
+    TIMIT
+      & Fair baseline
+      & 14.54 & 16.56 \\
+    TIMIT
+      & VI bugfix acoustic, b50, OT-2
+      & \textbf{14.16} & \textbf{15.79} \\
+    \midrule
+    LibriSpeech 960h
+      & Baseline CTC
+      & 2.54 / 6.02 & 2.85 / 6.29 \\
+    LibriSpeech 960h
+      & VFTA floor-0.30
+      & 2.56 / \textbf{6.00} & \textbf{2.84} / \textbf{6.08} \\
+    \bottomrule
+  \end{tabular}
+\end{table}

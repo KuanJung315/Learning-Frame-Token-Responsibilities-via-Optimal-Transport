@@ -36,3 +36,14 @@ node_modules
 .DS_Store
 *.fst
 *.arpa
+
+# Ignore training logs and checkpoints
+logs/
+**/logs/
+checkpoints/
+**/checkpoints/
+*.ckpt
+*.pth
+*.pth.tar
+events.out.tfevents.*
+wandb/

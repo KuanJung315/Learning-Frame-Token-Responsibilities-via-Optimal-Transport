@@ -36,7 +36,7 @@ class BpeCtcTrainingGraphCompiler(object):
           lang_dir:
             This directory is expected to contain the following files:
 
-                - bpe.model
+                - bpe.model, or bbpe.model for byte-BPE recipes
                 - words.txt
           device:
             It indicates CPU or CUDA.
@@ -47,6 +47,8 @@ class BpeCtcTrainingGraphCompiler(object):
         """
         lang_dir = Path(lang_dir)
         model_file = lang_dir / "bpe.model"
+        if not model_file.is_file():
+            model_file = lang_dir / "bbpe.model"
         sp = spm.SentencePieceProcessor()
         sp.load(str(model_file))
         self.sp = sp

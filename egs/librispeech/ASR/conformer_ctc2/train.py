@@ -120,10 +120,43 @@ def get_parser():
     )
 
     parser.add_argument(
+        "--profile-cuda-memory",
+        type=str2bool,
+        default=False,
+        help=(
+            "Run a bounded training-step CUDA memory profile, report the peak "
+            "across ranks, and exit without saving a checkpoint."
+        ),
+    )
+    parser.add_argument(
+        "--profile-warmup-batches",
+        type=int,
+        default=20,
+        help="Training batches to run before resetting CUDA peak statistics.",
+    )
+    parser.add_argument(
+        "--profile-measured-batches",
+        type=int,
+        default=200,
+        help="Training batches included in the CUDA peak-memory measurement.",
+    )
+
+    parser.add_argument(
         "--num-epochs",
         type=int,
         default=30,
         help="Number of epochs to train.",
+    )
+
+    parser.add_argument(
+        "--valid-interval-batches",
+        type=int,
+        default=0,
+        help=(
+            "Override validation frequency in training batches. 0 keeps the "
+            "recipe default (1600 for clean-100). Recipes that opt in may "
+            "also use this flag to guarantee epoch-end validation."
+        ),
     )
 
     parser.add_argument(
@@ -325,7 +358,7 @@ def get_params() -> AttributeDict:
             "best_train_epoch": -1,
             "best_valid_epoch": -1,
             "batch_idx_train": 0,
-            "log_interval": 1,
+            "log_interval": 50,
             "reset_interval": 200,
             "valid_interval": 3000,  # For the 100h subset, use 800
             # parameters for conformer
@@ -672,8 +705,18 @@ def train_one_epoch(
     model.train()
 
     tot_loss = MetricsTracker()
+    profile_start = params.profile_warmup_batches
+    profile_stop = profile_start + params.profile_measured_batches
 
     for batch_idx, batch in enumerate(train_dl):
+        if params.profile_cuda_memory and batch_idx == profile_start:
+            torch.cuda.synchronize()
+            torch.cuda.reset_peak_memory_stats()
+            logging.info(
+                "CUDA memory profile measurement started after %s warmup batches",
+                profile_start,
+            )
+
         params.batch_idx_train += 1
         batch_size = len(batch["supervisions"]["text"])
 
@@ -705,6 +748,46 @@ def train_one_epoch(
         scaler.step(optimizer)
         scaler.update()
         optimizer.zero_grad()
+
+        if params.profile_cuda_memory and batch_idx + 1 == profile_stop:
+            torch.cuda.synchronize()
+            device = next(model.parameters()).device
+            peaks = torch.tensor(
+                [
+                    torch.cuda.max_memory_allocated(device),
+                    torch.cuda.max_memory_reserved(device),
+                ],
+                dtype=torch.float64,
+                device=device,
+            )
+            local_peaks = peaks.clone()
+            if (
+                torch.distributed.is_available()
+                and torch.distributed.is_initialized()
+            ):
+                torch.distributed.all_reduce(peaks, op=torch.distributed.ReduceOp.MAX)
+            logging.info(
+                "CUDA_MEMORY_PROFILE_LOCAL rank=%d device=%s "
+                "peak_allocated_gib=%.3f peak_reserved_gib=%.3f",
+                rank,
+                torch.cuda.get_device_name(device),
+                local_peaks[0].item() / (1024**3),
+                local_peaks[1].item() / (1024**3),
+            )
+            if rank == 0:
+                logging.info(
+                    "CUDA_MEMORY_PROFILE world_size=%d device=%s warmup_batches=%d "
+                    "measured_batches=%d peak_allocated_gib=%.3f "
+                    "peak_reserved_gib=%.3f",
+                    world_size,
+                    torch.cuda.get_device_name(device),
+                    profile_start,
+                    params.profile_measured_batches,
+                    peaks[0].item() / (1024**3),
+                    peaks[1].item() / (1024**3),
+                )
+            params.cuda_memory_profile_complete = True
+            break
 
         if params.print_diagnostics and batch_idx == 30:
             return
@@ -801,7 +884,17 @@ def run(rank, world_size, args):
     """
     params = get_params()
     params.update(vars(args))
-    if params.full_libri is False:
+    if params.profile_cuda_memory:
+        if not torch.cuda.is_available():
+            raise RuntimeError("--profile-cuda-memory requires CUDA")
+        if params.profile_warmup_batches < 0:
+            raise ValueError("--profile-warmup-batches must be non-negative")
+        if params.profile_measured_batches <= 0:
+            raise ValueError("--profile-measured-batches must be positive")
+        params.cuda_memory_profile_complete = False
+    if int(getattr(params, "valid_interval_batches", 0)) > 0:
+        params.valid_interval = int(params.valid_interval_batches)
+    elif params.full_libri is False:
         params.valid_interval = 1600
 
     fix_random_seed(params.seed)
@@ -928,11 +1021,16 @@ def run(rank, world_size, args):
         return 1.0 <= c.duration <= 20.0
 
     def remove_invalid_utt_ctc(c: Cut):
-        # Caution: We assume the subsampling factor is 4!
-        # num_tokens = len(sp.encode(c.supervisions[0].text, out_type=int))
-        num_tokens = len(graph_compiler.texts_to_ids(c.supervisions[0].text))
+        # Always pass a batch to ``texts_to_ids``.  Phone graph compilers take a
+        # ``Sequence[str]``; passing a bare string makes them iterate over its
+        # characters and silently filters on character count instead of token
+        # count.  BPE and phone recipes both return the first token sequence here.
+        token_ids = graph_compiler.texts_to_ids([c.supervisions[0].text])[0]
+        num_tokens = len(token_ids)
         min_output_input_ratio = 0.0005
-        max_output_input_ratio = 0.1
+        max_output_input_ratio = float(
+            getattr(params, "ctc_filter_max_input_ratio", 0.1)
+        )
         return (
             min_output_input_ratio
             < num_tokens / float(c.features.num_frames)
@@ -995,6 +1093,14 @@ def run(rank, world_size, args):
             world_size=world_size,
             rank=rank,
         )
+
+        if params.profile_cuda_memory:
+            if not params.cuda_memory_profile_complete:
+                raise RuntimeError(
+                    "Training epoch ended before the CUDA memory profile completed"
+                )
+            logging.info("CUDA memory profile complete; skipping checkpoint save")
+            break
 
         if params.print_diagnostics:
             diagnostic.print_diagnostics()

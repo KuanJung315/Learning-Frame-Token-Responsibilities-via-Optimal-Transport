@@ -1,0 +1,91 @@
+% Additional completed-result tables, updated 2026-06-14.
+% Requires: \usepackage{booktabs}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Matched calibration-free greedy ablation on LibriSpeech 100h.
+  All methods use epoch 40 / avg 10 and seeds 42, 43, and 44. The column
+  marginal is used only when the OT term is enabled.}
+  \label{tab:libri100_complete_greedy_ablation}
+  \setlength{\tabcolsep}{4pt}
+  \begin{tabular}{llcc}
+    \toprule[1.1pt]
+    Method & OT column & Test-clean & Test-other \\
+    \midrule
+    Baseline CTC/AED
+      & -- & $7.487 \pm 0.199$
+      & $20.003 \pm 0.393$ \\
+    VFTA w/o OT
+      & -- & $7.377 \pm 0.021$
+      & $20.003 \pm 0.049$ \\
+    VFTA w/o prior-KL
+      & Acoustic & $7.443 \pm 0.035$
+      & $20.007 \pm 0.158$ \\
+    VFTA w/o pos. cost
+      & Acoustic & $7.410 \pm 0.040$
+      & $19.883 \pm 0.085$ \\
+    VFTA
+      & Uniform & $\mathbf{7.373 \pm 0.058}$
+      & $19.880 \pm 0.089$ \\
+    VFTA
+      & Acoustic & $7.397 \pm 0.015$
+      & $\mathbf{19.763 \pm 0.055}$ \\
+    \bottomrule[1.1pt]
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Seed-42 LibriSpeech 100h floor sweep. The floor behaves as a
+  lower-bound control: achieved prior mean changes only above the model's
+  natural operating point.}
+  \label{tab:libri100_floor_sweep}
+  \begin{tabular}{cccc}
+    \toprule
+    Floor target & Achieved prior mean & Test-clean & Test-other \\
+    \midrule
+    0.20 & 0.2891 & 7.42 & 19.80 \\
+    0.25 & 0.2913 & 7.41 & 19.95 \\
+    0.30 & --     & 7.41 & 19.76 \\
+    0.35 & 0.3613 & \textbf{7.25} & \textbf{19.68} \\
+    0.40 & 0.4051 & 7.46 & 19.75 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Seed-42 forward-backward posterior-consistency pilot on
+  LibriSpeech 100h using calibration-free greedy decoding.}
+  \label{tab:libri100_fb_consistency}
+  \begin{tabular}{lccc}
+    \toprule
+    Alignment loss & Weight / floor & Test-clean & Test-other \\
+    \midrule
+    Plan-cost & 0.10 / 0.30 & \textbf{7.41} & \textbf{19.76} \\
+    FB consistency & 0.10 / 0.30 & 7.57 & 20.07 \\
+    FB consistency & 0.03 / 0.30 & 7.47 & 19.94 \\
+    Plan-cost & 0.10 / none & \textbf{7.38} & \textbf{20.07} \\
+    FB consistency & 0.10 / none & 7.39 & 20.21 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[t]
+  \centering
+  \small
+  \caption{Calibration-free greedy scale-up result on LibriSpeech 960h.
+  Both rows are single-seed epoch-30 / avg-10 results.}
+  \label{tab:libri960_greedy}
+  \begin{tabular}{lcc}
+    \toprule
+    Method & Test-clean & Test-other \\
+    \midrule
+    Baseline CTC & 3.09 & 7.48 \\
+    VFTA & \textbf{3.02} & \textbf{7.25} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
