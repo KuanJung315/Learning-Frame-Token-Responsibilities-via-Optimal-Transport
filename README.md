@@ -10,16 +10,21 @@ recognition toolkit.
 
 ## Overview
 
-FTA is a method for speech recognition and alignment based on
-[請在這裡簡短描述你的方法].
+FTA is a frame-token assignment method for CTC-based automatic
+speech recognition. It introduces a learned blank gate and an optimal
+transport alignment between acoustic frames and transcript tokens. The OT
+coupling provides global mass conservation, positional preference, and
+optional Fused Gromov-Wasserstein structural matching, while CTC preserves
+valid monotonic alignments.
 
 The main experiments include:
 
-- LibriSpeech
-- AISHELL-1
-- TIMIT
-- CTC and alignment evaluation
-- [其他主要實驗]
+- LibriSpeech 100-hour and 960-hour ASR
+- AISHELL-1 Mandarin ASR
+- TIMIT phone recognition and alignment
+- CTC forced-alignment evaluation
+- Optimal Transport and Fused Gromov-Wasserstein alignment
+- Blank-prior and alignment-loss ablation studies
 
 ## Main Code
 
@@ -44,8 +49,38 @@ https://k2-fsa.github.io/icefall/installation/index.html
 
 ## Usage
 
-Training example:
+Prepare the LibriSpeech data and language resources following the original
+icefall recipe, then run training from the LibriSpeech ASR directory:
 
 ```bash
-python3 egs/librispeech/ASR/conformer_ctc2/train_vi_ot_v2.py \
-  [請填入實際參數]
+cd egs/librispeech/ASR
+
+python3 conformer_ctc2/train_vi_ot_v2.py \
+  --world-size 2 \
+  --num-epochs 40 \
+  --start-epoch 1 \
+  --exp-dir conformer_ctc2/exp/vfta \
+  --full-libri 0 \
+  --att-rate 0.7 \
+  --num-decoder-layers 6 \
+  --max-duration 500 \
+  --use-fp16 1 \
+  --lambda-ot 0.1 \
+  --ot-eps 0.3 \
+  --ot-iters 30 \
+  --ot-beta-pos 1.0 \
+  --col-marginal-type acoustic \
+  --ot-token-prior-sigma 0.15 \
+  --ot-token-prior-score-temp 1.0 \
+  --ot-token-prior-floor 0.05 \
+  --lambda-kl-blank 0.03 \
+  --alpha-smooth-mix 0.1 \
+  --label-embed-dim 256 \
+  --init-blank-prob 0.35 \
+  --gate-warmup-start 1000 \
+  --gate-warmup-steps 3000 \
+  --train-prior-mix 1.0 \
+  --lambda-alpha-mean 0.005 \
+  --alpha-mean-source prior \
+  --alpha-mean-mode floor \
+  --alpha-mean-target 0.35
