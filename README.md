@@ -10,7 +10,7 @@ recognition toolkit.
 
 ## Overview
 
-FTA is a frame-token assignment method for CTC-based automatic
+FTA is a frame-token allocation method for CTC-based automatic
 speech recognition. It introduces a learned blank gate and an optimal
 transport alignment between acoustic frames and transcript tokens. The OT
 coupling provides global mass conservation, positional preference, and
